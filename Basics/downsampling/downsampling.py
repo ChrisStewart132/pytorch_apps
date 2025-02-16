@@ -20,13 +20,13 @@ from torch.utils.tensorboard import SummaryWriter
 # tensorboard --logdir=runs
 
 WIDTH, HEIGHT = 256,256
-DOWNSAMPLE_FACTOR = 12
+DOWNSAMPLE_FACTOR = 8
 
 writer = SummaryWriter()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Default device: {device}")
 
-image_path = "images/image1.jpg"
+image_path = "../images/image1.jpg"
 img = cv2.imread(image_path)
 if img is None:
     raise FileNotFoundError(f"Image not found at {image_path}")
