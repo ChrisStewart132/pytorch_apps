@@ -10,12 +10,12 @@ from torch.utils.tensorboard import SummaryWriter
 
 WIDTH, HEIGHT = 512,512
 STRIDE = 1
-DILATION = 2
+DILATION = 1
 KERNEL_SIZE = 3
-ORIGINAL_TRANSPARENCY = -0.5# uses cnn bias
-image_path = "../images/image1.jpg"
+ORIGINAL_TRANSPARENCY = 0# uses cnn bias
+image_path = "../images/rgb.jpg"
 IMAGE_NAME = image_path.split("/")[-1].split(".")[0]
-VIDEO_STREAMING = True
+VIDEO_STREAMING = False
 
 writer = SummaryWriter()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,7 +46,8 @@ class CNN(nn.Module):
         self.conv.weight.data[4, 1, :, :] = torch.tensor(both, dtype=torch.float32)
         # input channel 2 edge detection filter
         self.conv.weight.data[5, 2, :, :] = torch.tensor(both, dtype=torch.float32)
-
+        print(self.conv.weight.data.shape)
+        print(self.conv.weight.data)
     def forward(self, x):
         edges = self.conv(x)  # Output shape: (batch_size, n_channels, H, W)
         return edges
