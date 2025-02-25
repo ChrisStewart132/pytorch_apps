@@ -44,7 +44,7 @@ def main():
     parser = argparse.ArgumentParser(description="Convert videos to images.")
     parser.add_argument("--video_dir", required=True, help="Directory containing videos.")
     parser.add_argument("--output_dir", required=True, help="Directory to save output images.")
-    parser.add_argument("--frames_skipped", type=int, default=2, help="Frames skipped per frame saved")
+    parser.add_argument("--frames_skipped", type=int, default=1, help="Frames skipped per frame saved")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
