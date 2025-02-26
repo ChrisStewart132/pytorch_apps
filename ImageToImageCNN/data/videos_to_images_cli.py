@@ -1,13 +1,13 @@
 """
 extract frames from videos
 usage:
-    python video_to_images.py --video_dir <video_dir> --output_dir_for_images <output_dir> --frames_skipped <frames_skipped>
+    python video_to_images_cli.py --video_dir <video_dir> --output_dir_for_images <output_dir> --frames_skipped <frames_skipped>
 
-python video_to_images.py --video_dir train/input --output_dir train/input 
-python video_to_images.py --video_dir train/output --output_dir train/output 
+python video_to_images_cli.py --video_dir train/input --output_dir train/input 
+python video_to_images_cli.py --video_dir train/output --output_dir train/output 
 
-python video_to_images.py --video_dir test/input --output_dir test/input 
-python video_to_images.py --video_dir test/output --output_dir test/output 
+python video_to_images_cli.py --video_dir test/input --output_dir test/input 
+python video_to_images_cli.py --video_dir test/output --output_dir test/output 
 """
 import os
 import cv2
@@ -51,7 +51,7 @@ def main():
     for filename in os.listdir(args.video_dir):
         if filename.endswith(('.mp4', '.avi', '.mov')):
             video_path = os.path.join(args.video_dir, filename)
-            video_to_images(video_path, args.output_dir, frames_skipped=args.frames_skipped)
+            video_to_images(video_path, args.output_dir, frames_skipped=args.frames_skipped, prefix=filename)
 
 if __name__ == "__main__":
     main()
