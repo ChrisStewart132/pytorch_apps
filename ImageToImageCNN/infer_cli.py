@@ -5,7 +5,6 @@ python infer_cli.py --model_path models/model_32f_v1.pth --video_path data/test/
 
 
 """
-
 import argparse
 import os
 import cv2
@@ -15,15 +14,15 @@ from model import ImageToImageCNN
 import numpy as np
 import re
 
-SCALE_FACTOR = 2
+# SCALE_FACTOR = 2  <- Remove hardcoded SCALE_FACTOR
 
-def run_inference(model_path, video_path, save_video=False):
+def run_inference(model_path, video_path, save_video=False, scale_factor=2): # Add scale_factor as argument with default value
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     match = re.search(r"_([0-9]+f)_", model_path)  # Find a number followed by f
     N_FEATURES_str = match.group(1)  # Get the captured group (e.g., "32f")
     N_FEATURES = int(N_FEATURES_str[:-1])  # Convert to int, remove "f"
 
-    model = ImageToImageCNN(3, 3, features=N_FEATURES, scale_factor=SCALE_FACTOR)
+    model = ImageToImageCNN(3, 3, features=N_FEATURES, scale_factor=scale_factor) # Use scale_factor argument
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
@@ -40,7 +39,7 @@ def run_inference(model_path, video_path, save_video=False):
 
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    output_size = (frame_width * SCALE_FACTOR, frame_height * SCALE_FACTOR)
+    output_size = (frame_width * scale_factor, frame_height * scale_factor) # Use scale_factor argument
 
     if save_video:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -76,7 +75,7 @@ def run_inference(model_path, video_path, save_video=False):
 
 def process_path(path_arg):
     if os.path.isabs(path_arg):  # Check if it's an absolute path
-        resolved_path = path_arg  
+        resolved_path = path_arg
     else:  # It's a relative path
         resolved_path = os.path.abspath(path_arg)  # Resolve relative to CW
     return resolved_path
@@ -86,6 +85,12 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, required=True, help="Path to the trained model")
     parser.add_argument("--video_path", type=str, required=True, help="Path to the input video")
     parser.add_argument("--save_video", action="store_true", help="Flag to save the output video")
+    parser.add_argument("--scale_factor", type=int, default=2, help="Scale factor for upsampling (optional, default: 2)") # Add scale_factor argument
     args = parser.parse_args()
-    run_inference(process_path(args.model_path), process_path(args.video_path), args.save_video)
+    run_inference(
+        process_path(args.model_path),
+        process_path(args.video_path),
+        args.save_video,
+        args.scale_factor # Pass scale_factor argument
+    )
     print("inference finished")

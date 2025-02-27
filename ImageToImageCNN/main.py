@@ -272,6 +272,7 @@ class InferenceTab(AbstractTab):
         self.model_var = tk.StringVar(self.frame)
         self.video_var = tk.StringVar(self.frame)
         self.save_video_var = tk.BooleanVar(self.frame, value=False)
+        self.scale_factor_var = tk.IntVar(self.frame, value=2) # Default scale factor to 2
 
         display_models = self.models # Relative paths for models
         display_videos = self.videos # Full relative paths for videos
@@ -295,20 +296,48 @@ class InferenceTab(AbstractTab):
         self.video_dropdown.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
         self.video_dropdown.config(justify='right') # Right justify
 
+        scale_factor_label = ttk.Label(self.frame, text="Scale Factor (1-32):")
+        scale_factor_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+
+        self.scale_factor_spinbox = tk.Spinbox(
+            self.frame,
+            textvariable=self.scale_factor_var,
+            from_=1, to=32,
+            width=5,
+            validate="focusout", # or "all" for live validation
+            vcmd=(self.frame.register(self.validate_scale_factor), '%P') # Register validation command
+        )
+        self.scale_factor_spinbox.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.scale_factor_spinbox.config(justify='right') # Right justify
 
         self.save_video_checkbox = tk.Checkbutton(self.frame, text="Save Video", variable=self.save_video_var)
-        self.save_video_checkbox.grid(row=2, column=0, columnspan=2, pady=5)
+        self.save_video_checkbox.grid(row=3, column=0, columnspan=2, pady=5)
 
         self.test_button = tk.Button(self.frame, text="Run Inference", command=self.run_command)
-        self.test_button.grid(row=3, column=0, columnspan=2, pady=20)
+        self.test_button.grid(row=4, column=0, columnspan=2, pady=20)
 
         self.refresh_button = ttk.Button(self.frame, text="Refresh Files", command=self.update_files)
-        self.refresh_button.grid(row=4, column=0, columnspan=2, pady=10)
+        self.refresh_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+    def validate_scale_factor(self, value_if_allowed):
+        if not value_if_allowed: # Allow empty input for backspace
+            return True
+        try:
+            v = int(value_if_allowed)
+            if 1 <= v <= 32:
+                return True
+            else:
+                messagebox.showerror("Validation Error", "Scale Factor must be between 1 and 32.")
+                return False
+        except ValueError:
+            messagebox.showerror("Validation Error", "Invalid input for Scale Factor. Must be an integer.")
+            return False
 
     def run_command(self):
         model = self.model_var.get()
         video = self.video_var.get()
         save_video = self.save_video_var.get()
+        scale_factor = self.scale_factor_var.get()
 
         if not model or not video:
             messagebox.showerror("Error", "Please select both a model and a video!")
@@ -322,6 +351,7 @@ class InferenceTab(AbstractTab):
             "infer_cli.py",
             "--model_path", full_model_path,
             "--video_path", full_video_path,
+            "--scale_factor", str(scale_factor), # Add scale_factor to command
         ]
 
         if save_video:
@@ -405,21 +435,6 @@ class DataTab(AbstractTab):
         video_dir = self.root_dir # Or define a specific video directory input field if needed
         output_dir = os.path.join(self.root_dir, "images_output") # Example output directory
 
-        
-        """
-        extract frames from videos
-        usage:
-            python video_to_images_cli.py --video_dir <video_dir> --output_dir_for_images <output_dir> --frames_skipped <frames_skipped>
-
-        python video_to_images_cli.py --video_dir train/input --output_dir train/input 
-        python video_to_images_cli.py --video_dir train/output --output_dir train/output 
-
-        python video_to_images_cli.py --video_dir validation/input --output_dir validation/input 
-        python video_to_images_cli.py --video_dir validation/output --output_dir validation/output 
-
-        python video_to_images_cli.py --video_dir test/input --output_dir test/input 
-        python video_to_images_cli.py --video_dir test/output --output_dir test/output 
-        """
     def videos_to_images_command(self):
         frames_skipped = self.frames_skipped_spinbox.get()
         data_dir = "data"
