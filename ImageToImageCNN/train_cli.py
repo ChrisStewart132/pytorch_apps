@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.utils as vutils
 from model import ImageToImageCNN
-from loss import VGGPerceptualLoss, WeightedMSELoss, MaxPoolLoss
+from loss import VGGPerceptualLoss, WeightedMSELoss, MaxPoolLoss, EffNetV2PerceptualLoss
 from dataset import PairedImageDataset
 from tensorboard_logger import TensorboardLogger
 import os
@@ -54,7 +54,8 @@ def main():
     else:
         print(f"Creating new model at {model_path}")
 
-    criterion = VGGPerceptualLoss(False, device, feature_layers=[], style_layers=[0, 1], style_weights=[0.75, 0.25])
+    #criterion = VGGPerceptualLoss(False, device, feature_layers=[], style_layers=[0, 1], style_weights=[0.75, 0.25])
+    criterion = EffNetV2PerceptualLoss(False, device)
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     model.to(device)

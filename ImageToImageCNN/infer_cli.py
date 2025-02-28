@@ -1,9 +1,5 @@
 """
-
-
 python infer_cli.py --model_path models/model_32f_v1.pth --video_path data/test/input/ImageToImageCNN.mp4 --save_video
-
-
 """
 import argparse
 import os
