@@ -3,6 +3,8 @@ import torch.nn as nn
 import torchvision
 from torchvision.models import VGG16_Weights
 from torchvision.models import efficientnet_v2_s, EfficientNet_V2_S_Weights
+from torchvision.models import convnext_tiny, ConvNeXt_Tiny_Weights
+
 
 class MaxPoolLoss(nn.Module):
     def __init__(self, scale_factor=2):
@@ -188,4 +190,10 @@ class PerceptualLoss(nn.Module):
 class EffNetV2PerceptualLoss(PerceptualLoss):
     def __init__(self, resize=True, device="cpu", style_layers=[0,2,3], style_weights=[1,1,1], feature_layers=[], feature_weights=[], l1_loss_factor=0):
         model = efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.DEFAULT).features
+        super().__init__(model, resize, device, style_layers, style_weights, feature_layers, feature_weights, l1_loss_factor)
+
+
+class ConvNeXtTinyPerceptualLoss(PerceptualLoss):
+    def __init__(self, resize=True, device="cpu", style_layers=[0,1,2], style_weights=[1,1,1], feature_layers=[], feature_weights=[], l1_loss_factor=0):
+        model = convnext_tiny(weights=ConvNeXt_Tiny_Weights.DEFAULT).features
         super().__init__(model, resize, device, style_layers, style_weights, feature_layers, feature_weights, l1_loss_factor)

@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.utils as vutils
 from model import ImageToImageCNN
-from loss import VGGPerceptualLoss, WeightedMSELoss, MaxPoolLoss, EffNetV2PerceptualLoss
+from loss import VGGPerceptualLoss, WeightedMSELoss, MaxPoolLoss, EffNetV2PerceptualLoss, ConvNeXtTinyPerceptualLoss
 from dataset import PairedImageDataset
 from tensorboard_logger import TensorboardLogger
 import os
@@ -55,7 +55,8 @@ def main():
         print(f"Creating new model at {model_path}")
 
     #criterion = VGGPerceptualLoss(False, device, feature_layers=[], style_layers=[0, 1], style_weights=[0.75, 0.25])
-    criterion = EffNetV2PerceptualLoss(False, device)
+    #criterion = EffNetV2PerceptualLoss(False, device)
+    criterion = ConvNeXtTinyPerceptualLoss(False, device)
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     model.to(device)
@@ -91,7 +92,11 @@ def main():
             best_loss = loss.item()
 
         #torch.save(model.state_dict(), model_path[:-4] + f'_{epoch}.pth')
-        print(f"Epoch [{epoch+1}/{args.starting_epoch + args.n_epochs}], Loss: {loss.item():.4f}, Best Loss: {best_loss:.4f}")
+        if loss < 1e-4:
+            print(f"Epoch [{epoch+1}/{args.starting_epoch + args.n_epochs}], Loss: {loss.item()}, Best Loss: {best_loss}")
+        else:
+            print(f"Epoch [{epoch+1}/{args.starting_epoch + args.n_epochs}], Loss: {loss.item():.4f}, Best Loss: {best_loss:.4f}")
+            
         logger.log_epoch_loss(epoch, loss.item(), best_loss)
 
     dataset.close()
