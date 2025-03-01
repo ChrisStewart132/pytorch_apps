@@ -35,11 +35,16 @@ def run_inference(model_path, video_path, save_video=False, scale_factor=2): # A
 
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    output_size = (frame_width * scale_factor, frame_height * scale_factor) # Use scale_factor argument
+    output_size = (frame_width, frame_height)
 
     if save_video:
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         out = cv2.VideoWriter(f"{model_path[:-4]}_inference.avi", fourcc, cap.get(cv2.CAP_PROP_FPS), output_size)
+        print(f"saving video to: {model_path}")
+
+    if save_video and not out.isOpened():
+        print("Error opening video writer!")
+
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -58,15 +63,19 @@ def run_inference(model_path, video_path, save_video=False, scale_factor=2): # A
         output_image_bgr = (output_image_bgr * 255).astype(np.uint8)
 
         if save_video:
+            #print("write frame to video")
             out.write(output_image_bgr)
+            
 
-        cv2.imshow("Inference Output", output_image_bgr)
+        cv2.imshow(f"{model_path} Inference Output (press Q to exit)", output_image_bgr)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    cap.release()
+    
     if save_video:
+        print("release video")
         out.release()
+    cap.release()
     cv2.destroyAllWindows()
 
 def process_path(path_arg):
