@@ -4,4 +4,3 @@ __pycache__/
 runs
 *.avi
 archive
-model_viewer.py
