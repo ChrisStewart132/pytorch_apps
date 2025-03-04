@@ -17,7 +17,6 @@ kernel = np.array([[0, 0, 0],
                     [0, 0, 0],
                     [0, 0, 0]])
 
-
 class ManualWeightedConv2d(nn.Module):
     def __init__(self, in_channels=3, out_channels=1, kernel_size=3, stride=1, padding=1):
         super(ManualWeightedConv2d, self).__init__()
@@ -34,13 +33,17 @@ class ManualWeightedConv2d(nn.Module):
         # Update the weights using the provided kernels
         self.update_weights(kernel, kernel, kernel)
         self.scaling = 2
+        self.inter_conv = nn.Conv2d(1,1,kernel_size = 3, stride = 1, padding = 1)
 
-    def forward(self, x):
+    def forward(self, x, depth=1):
         x = nn.functional.avg_pool2d(x, self.scaling, self.scaling)
+        #First use the original conv.
         x = nn.functional.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+        #Then loop through the interconvs as many times as needed.
+        for _ in range(depth-1):
+            x = self.inter_conv(x)
         # x = x.where(x > 0.0, torch.zeros_like(x)) #commented out as this made the ui unresponsive
-
-        x = nn.functional.upsample(x, scale_factor=self.scaling, mode='bilinear', align_corners=False)
+        x = nn.functional.interpolate(x, scale_factor=self.scaling, mode='bilinear', align_corners=False)
         return x
 
     def update_weights(self, r, g, b):
@@ -49,11 +52,32 @@ class ManualWeightedConv2d(nn.Module):
         self.weight.data[0, 1, :, :] = torch.tensor(g)
         self.weight.data[0, 2, :, :] = torch.tensor(b)
 
+# --- Kernel Visualization ---
+def update_kernel_visualization():
+    kernel_display = np.zeros((150, 150), dtype=np.uint8)
+    cell_size = 50
+
+    for i in range(3):
+        for j in range(3):
+            val = kernel[i, j]
+            text = str(val)
+            color = 255 if val >= 0 else 0
+            cv2.rectangle(kernel_display, (j * cell_size, i * cell_size), ((j + 1) * cell_size, (i + 1) * cell_size), color, -1)
+            
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+            text_x = int(j * cell_size + (cell_size - text_width) / 2)
+            text_y = int((i + 1) * cell_size - (cell_size - text_height) / 2)
+            cv2.putText(kernel_display, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255-color), 2)
+
+    cv2.imshow("Kernel", kernel_display)
+
+# --- End of Kernel Visualization ---
+
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 manual_conv = ManualWeightedConv2d(in_channels=3, out_channels=1, kernel_size=3, padding=1)
-model = nn.Sequential(manual_conv).to(device)
+model = manual_conv.to(device)
 
 v = Video(show=True, save=False)
 video_path = '..\\ImageToImageCNN\\data\\validation\\input\\Validation.mp4'
@@ -100,28 +124,16 @@ cv2.createTrackbar("Scaling", "UI", scaling, 10, on_scaling_change)
 
 # --- End of UI Setup ---
 
-# --- Kernel Visualization ---
-def update_kernel_visualization():
-    kernel_display = np.zeros((150, 150), dtype=np.uint8)
-    cell_size = 50
-
-    for i in range(3):
-        for j in range(3):
-            val = kernel[i, j]
-            text = str(val)
-            color = 255 if val >= 0 else 0
-            cv2.rectangle(kernel_display, (j * cell_size, i * cell_size), ((j + 1) * cell_size, (i + 1) * cell_size), color, -1)
-            
-            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
-            text_x = int(j * cell_size + (cell_size - text_width) / 2)
-            text_y = int((i + 1) * cell_size - (cell_size - text_height) / 2)
-            cv2.putText(kernel_display, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255-color), 2)
-
-    cv2.imshow("Kernel", kernel_display)
 
 update_kernel_visualization()  # Initial call to display the initial kernel
 
-# --- End of Kernel Visualization ---
+depth = 1
+def on_depth_change(val):
+    global depth
+    depth = val if val > 0 else 1
+    
+
+cv2.createTrackbar("Depth", "UI", depth, 5, on_depth_change)
 
 def fn(frame):
     # pre
@@ -130,7 +142,7 @@ def fn(frame):
 
     # infer
     with torch.no_grad():
-        y = model(x)
+        y = model(x, depth)
 
     # post
     y_np = y[0].permute(1, 2, 0).cpu().numpy()
