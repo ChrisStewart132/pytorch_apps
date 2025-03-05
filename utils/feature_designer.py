@@ -34,6 +34,7 @@ class ManualWeightedConv2d(nn.Module):
         self.update_weights(kernel, kernel, kernel)
         self.scaling = 2
         self.inter_conv = nn.Conv2d(1,1,kernel_size = 3, stride = 1, padding = 1)
+        self.relu = nn.ReLU() # Adding ReLU layer
 
     def forward(self, x, depth=1):
         x = nn.functional.avg_pool2d(x, self.scaling, self.scaling)
@@ -42,7 +43,8 @@ class ManualWeightedConv2d(nn.Module):
         #Then loop through the interconvs as many times as needed.
         for _ in range(depth-1):
             x = self.inter_conv(x)
-        # x = x.where(x > 0.0, torch.zeros_like(x)) #commented out as this made the ui unresponsive
+            x = self.relu(x) # Apply ReLU after each inter_conv
+        
         x = nn.functional.interpolate(x, scale_factor=self.scaling, mode='bilinear', align_corners=False)
         return x
 
@@ -150,13 +152,13 @@ def fn(frame):
 
     # Convert to grayscale
     y_gray = (y_np * 255).astype(np.uint8)
-
-    # Duplicate grayscale to create a 3-channel image
-    y_rgb = np.stack([y_gray[:, :, 0], y_gray[:, :, 0], y_gray[:, :, 0]], axis=-1)
+    
+    # Apply a colormap
+    y_bgr = cv2.applyColorMap(y_gray, cv2.COLORMAP_DEEPGREEN) 
 
     frame = frame.astype(np.uint8)
     global alpha
-    blended_frame = cv2.addWeighted(frame, 1 - alpha, y_rgb, alpha, 0)
+    blended_frame = cv2.addWeighted(frame, 1 - alpha, y_bgr, alpha, 0)
     
     #the size of the zeros here is irrelevant.
     # it is the window type that causes the resize.
