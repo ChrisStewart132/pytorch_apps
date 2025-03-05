@@ -9,7 +9,7 @@ CNN kernel manual weighting in real time
 
 ![feature_designer](https://github.com/user-attachments/assets/d9965829-78fb-406b-9e0a-b02a767fded7)
 
-## Model viewer (backbone feature map visualiztion)
+## Model viewer (backbone feature map visualization)
 
 conv next example
 
