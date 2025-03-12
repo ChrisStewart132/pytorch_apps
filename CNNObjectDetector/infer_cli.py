@@ -12,7 +12,11 @@ import numpy as np
 import re
 
 
-def run_inference(model_path, video_path, save_video=False, scale_factor=2): # Add scale_factor as argument with default value
+ALPHA = 0.99
+BETA = 1-ALPHA
+
+
+def run_inference(model_path, video_path, save_video=False, scale_factor=2): 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     match = re.search(r"_([0-9]+f)_", model_path)  # Find a number followed by f
     N_FEATURES_str = match.group(1)  # Get the captured group (e.g., "32f")
@@ -58,15 +62,15 @@ def run_inference(model_path, video_path, save_video=False, scale_factor=2): # A
             output = model(input_tensor)
 
         output_image = output.squeeze(0).cpu().permute(1, 2, 0).numpy()
-        output_image_bgr = cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
-        output_image_bgr = np.clip(output_image_bgr, 0, 1)
+        output_image_bgr = output_image#cv2.cvtColor(output_image, cv2.COLOR_RGB2BGR)
+        #output_image_bgr = np.clip(output_image_bgr, 0, 1)
         output_image_bgr = (output_image_bgr * 255).astype(np.uint8)
 
         # resize output_image_bgr from 224x224 to output_size
         output_image_bgr = cv2.resize(output_image_bgr, output_size)
         
         # overlay output_image_bgr ontop of frame
-        output_image_bgr = cv2.addWeighted(frame, 0.4, output_image_bgr, 0.6, 0)
+        output_image_bgr = cv2.addWeighted(frame, BETA, output_image_bgr, ALPHA, 0)
 
 
         if save_video:

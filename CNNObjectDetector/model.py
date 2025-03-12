@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision.models import convnext_tiny, ConvNeXt_Tiny_Weights
+from torchvision.models import convnext_base, ConvNeXt_Base_Weights
 
 
 class FeatureExtractor(nn.Module):
@@ -8,6 +9,7 @@ class FeatureExtractor(nn.Module):
         super(FeatureExtractor, self).__init__()
         # Load the pretrained ConvNeXt-Tiny model
         self.backbone = convnext_tiny(weights=ConvNeXt_Tiny_Weights.DEFAULT).features
+        #self.backbone =  convnext_base(weights=ConvNeXt_Base_Weights.DEFAULT).features
         # Put the backbone in evaluation mode
         self.backbone.eval()
         # Freeze the backbone layers
